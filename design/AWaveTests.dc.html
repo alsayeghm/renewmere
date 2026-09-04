@@ -1,0 +1,50 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    body { margin: 0; background: #FAF8F3; font-family: 'Archivo', system-ui, sans-serif; }
+    a { color: #A9720F; } a:hover { color: #7A5209; }
+  </style>
+</helmet>
+<div style="width: 560px; height: 460px; background: #FAF8F3; display: flex; flex-direction: column; padding: 40px; box-sizing: border-box;">
+  <div style="font-family: 'Archivo', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #A39A85; margin-bottom: 4px;">Concept A — locked</div>
+  <div style="font-family: 'Archivo', sans-serif; font-size: 13px; color: #8A8270; margin-bottom: 32px;">Underline spec, for handoff</div>
+
+  <div style="display: flex; flex-direction: column; align-items: flex-start; margin-bottom: 32px;">
+    <div style="font-family: 'Archivo', sans-serif; font-weight: 800; font-size: 48px; letter-spacing: -0.02em; color: #1C1A16; line-height: 1;">renewmere</div>
+    <svg width="308" height="14" viewBox="0 0 308 14" style="margin-top: 12px;"><path d="M0,7 C47,-1 89,15 136,6 C183,-3 231,12 308,5" fill="none" stroke="#A9720F" stroke-width="1.9" stroke-linecap="round"></path></svg>
+  </div>
+
+  <div style="background: #EFEAD9; border-radius: 8px; padding: 20px 22px;">
+    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #6B6455; line-height: 1.9;">
+      <div>wordmark &mdash; Archivo 800, -0.02em tracking</div>
+      <div>ink &mdash; #1C1A16 light / #F2EEE3 dark</div>
+      <div>underline stroke &mdash; 2.2px at 56px cap height</div>
+      <div>stroke color &mdash; #A9720F light / #E0B25C dark</div>
+      <div>underline scales with cap height, roughly 1 : 25</div>
+    </div>
+  </div>
+
+  <div style="margin-top: 28px; font-family: 'Archivo', sans-serif; font-size: 12px; color: #8A8270; line-height: 1.6;">
+    Rejected: the near-flat hairline read as too quiet next to the heavy 800-weight wordmark; this wider swing holds its own against the type without competing with it.
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

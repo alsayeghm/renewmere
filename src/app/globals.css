@@ -1,0 +1,76 @@
+@import "tailwindcss";
+
+:root {
+  --paper: #faf8f3;
+  --surface: #ffffff;
+  --surface-2: #efead9;
+  --border: #e5dfce;
+  --ink: #1c1a16;
+  --muted: #8a8270;
+  --pine: #1c1a16;
+  --accent: #a9720f;
+  --living: #2c7a4b;
+  --living-ink: #1e5b38;
+  --amber: #a9720f;
+  --amber-surface: #f6ecd8;
+  --danger: #a23a2e;
+  --danger-surface: #f7e7e3;
+  --focus: #a9720f;
+  --live: #22c55e;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #14120e;
+    --surface: #1e1b15;
+    --surface-2: #2a2620;
+    --border: #33402e;
+    --ink: #f2eee3;
+    --muted: #a2ac97;
+    --pine: #f2eee3;
+    --accent: #e0b25c;
+    --living: #6fc98d;
+    --living-ink: #8fdbaa;
+    --amber: #e0b25c;
+    --amber-surface: #2c2415;
+    --danger: #e28c7d;
+    --danger-surface: #2e1d18;
+    --focus: #e0b25c;
+    --live: #4ade80;
+  }
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-pine: var(--pine);
+  --color-accent: var(--accent);
+  --color-living: var(--living);
+  --color-living-ink: var(--living-ink);
+  --color-amber: var(--amber);
+  --color-amber-surface: var(--amber-surface);
+  --color-danger: var(--danger);
+  --color-danger-surface: var(--danger-surface);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-archivo), system-ui, sans-serif;
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}

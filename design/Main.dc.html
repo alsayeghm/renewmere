@@ -1,0 +1,73 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { margin: 0; background: #FAF8F3; font-family: 'Archivo', system-ui, sans-serif; }
+    a { color: #A9720F; } a:hover { color: #7A5209; }
+  </style>
+</helmet>
+<div style="width: 720px; height: 460px; background: #FAF8F3; display: flex; flex-direction: column; padding: 40px; box-sizing: border-box;">
+  <div style="font-family: 'Archivo', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #A39A85; margin-bottom: 4px;">Concept A — locked</div>
+  <div style="font-family: 'Archivo', sans-serif; font-size: 13px; color: #8A8270; margin-bottom: 40px;">Light lockup, bolder stroke / wider swing</div>
+
+  <div style="display: flex; align-items: center; gap: 56px;">
+    <div style="display: flex; flex-direction: column; align-items: flex-start;">
+      <div style="font-family: 'Archivo', sans-serif; font-weight: 800; font-size: 56px; letter-spacing: -0.02em; color: #1C1A16; line-height: 1;">renewmere</div>
+      <svg width="360" height="16" viewBox="0 0 360 16" style="margin-top: 14px;" role="img" aria-label="Contour underline mark">
+        <path d="M0,8 C55,-1 104,17 159,7 C214,-3 270,14 360,6" fill="none" stroke="#A9720F" stroke-width="2.2" stroke-linecap="round"></path>
+      </svg>
+    </div>
+
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
+      <div style="width: 88px; height: 88px; background: #EFEAD9; border-radius: 6px; display: flex; align-items: center; justify-content: center;">
+        <svg width="52" height="20" viewBox="0 0 52 20" role="img" aria-label="Standalone mark">
+          <path d="M0,10 C8,1 15,19 22,8 C29,-3 36,16 52,7" fill="none" stroke="#A9720F" stroke-width="2.6" stroke-linecap="round"></path>
+        </svg>
+      </div>
+      <div style="font-family: 'Archivo', sans-serif; font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: #A39A85;">Favicon</div>
+    </div>
+  </div>
+
+  <div style="margin-top: 48px; padding-top: 28px; border-top: 1px solid #E5DFCE;">
+    <div style="font-family: 'Archivo', sans-serif; font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: #A39A85; margin-bottom: 16px;">Mark at real favicon sizes</div>
+    <div style="display: flex; align-items: center; gap: 28px;">
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+        <div style="width: 64px; height: 64px; background: #EFEAD9; border-radius: 6px; display: flex; align-items: center; justify-content: center;">
+          <svg width="38" height="15" viewBox="0 0 52 20"><path d="M0,10 C8,1 15,19 22,8 C29,-3 36,16 52,7" fill="none" stroke="#A9720F" stroke-width="3" stroke-linecap="round"></path></svg>
+        </div>
+        <div style="font-family: 'Archivo', sans-serif; font-size: 10px; color: #A39A85;">64px</div>
+      </div>
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+        <div style="width: 32px; height: 32px; background: #EFEAD9; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+          <svg width="19" height="7" viewBox="0 0 52 20"><path d="M0,10 C8,1 15,19 22,8 C29,-3 36,16 52,7" fill="none" stroke="#A9720F" stroke-width="4.2" stroke-linecap="round"></path></svg>
+        </div>
+        <div style="font-family: 'Archivo', sans-serif; font-size: 10px; color: #A39A85;">32px</div>
+      </div>
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+        <div style="width: 16px; height: 16px; background: #EFEAD9; border-radius: 3px; display: flex; align-items: center; justify-content: center;">
+          <svg width="10" height="4" viewBox="0 0 52 20"><path d="M0,10 C8,1 15,19 22,8 C29,-3 36,16 52,7" fill="none" stroke="#A9720F" stroke-width="6.5" stroke-linecap="round"></path></svg>
+        </div>
+        <div style="font-family: 'Archivo', sans-serif; font-size: 10px; color: #A39A85;">16px</div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

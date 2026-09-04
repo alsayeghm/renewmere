@@ -1,0 +1,49 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { margin: 0; background: #FAF8F3; font-family: 'Archivo', system-ui, sans-serif; }
+    a { color: #A9720F; } a:hover { color: #7A5209; }
+  </style>
+</helmet>
+<div style="width: 720px; height: 420px; background: #FAF8F3; display: flex; flex-direction: column; padding: 40px; box-sizing: border-box;">
+  <div style="font-family: 'Archivo', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #A39A85; margin-bottom: 4px;">Concept B</div>
+  <div style="font-family: 'Archivo', sans-serif; font-size: 13px; color: #8A8270; margin-bottom: 48px;">Contour extends the final letterform</div>
+
+  <div style="display: flex; align-items: center; gap: 56px; flex: 1;">
+    <div style="position: relative; display: inline-block;">
+      <div style="font-family: 'Archivo', sans-serif; font-weight: 800; font-size: 56px; letter-spacing: 0.005em; color: #1C1A16; line-height: 1; white-space: nowrap;">renewmere</div>
+      <svg width="140" height="30" viewBox="0 0 140 30" style="position: absolute; right: -110px; top: 16px;" role="img" aria-label="Contour extending from the wordmark">
+        <path d="M0,15 C22,4 40,26 62,14 C84,2 104,24 140,10" fill="none" stroke="#A9720F" stroke-width="2.5" stroke-linecap="round"></path>
+      </svg>
+    </div>
+
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 10px; margin-left: 40px;">
+      <div style="width: 88px; height: 88px; background: #EFEAD9; border-radius: 6px; display: flex; align-items: center; justify-content: center;">
+        <svg width="54" height="26" viewBox="0 0 54 26" role="img" aria-label="Standalone mark">
+          <path d="M0,20 C6,4 14,24 20,12 C28,-2 36,22 42,10 C46,3 50,14 54,8" fill="none" stroke="#A9720F" stroke-width="2.5" stroke-linecap="round"></path>
+        </svg>
+      </div>
+      <div style="font-family: 'Archivo', sans-serif; font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: #A39A85;">Favicon</div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>
