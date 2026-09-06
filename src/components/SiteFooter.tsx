@@ -150,8 +150,8 @@ export function SiteFooter() {
 
         <div className="mt-12 flex flex-col gap-4 border-t border-border pt-6 text-[12px] text-muted sm:flex-row sm:items-center sm:justify-between">
           <p>
-            GoldenPass Ltd, trading as Renewmere · Registered in England and
-            Wales, company no. 15877279
+            Renewmere is a subsidiary of GoldenPass Ltd · Registered in England
+            and Wales, company no. 15877279
           </p>
           <div className="flex items-center gap-4">
             <Link

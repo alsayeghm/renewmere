@@ -224,6 +224,35 @@ export function renderStepWaitingEmail(opts: {
   });
 }
 
+export function renderWelcomeEmail(): string {
+  const bodyHtml = `
+    <p style="margin:0 0 16px;font-size:14px;color:${COLORS.ink};line-height:1.6;">
+      Your account is ready. You can now save your compliance checks and come back to them anytime.
+    </p>
+    <p style="margin:0 0 24px;font-size:14px;color:${COLORS.muted};line-height:1.6;">
+      Start with the free Simpler Recycling check — a short question set that tells you exactly where you
+      stand, obligation by obligation, with the citation behind every colour.
+    </p>
+    <table role="presentation" cellpadding="0" cellspacing="0">
+      <tr><td style="border-radius:6px;background:${COLORS.accent};">
+        <a href="https://renewmere.com/check" style="display:inline-block;padding:12px 22px;font-size:14px;font-weight:600;color:#ffffff;text-decoration:none;">
+          Start the free check →
+        </a>
+      </td></tr>
+    </table>
+    <p style="margin:28px 0 0;font-size:12px;color:${COLORS.muted};border-top:1px solid ${COLORS.border};padding-top:16px;">
+      Renewmere is a subsidiary of GoldenPass Ltd &middot; Registered in England and Wales, company no. 15877279
+    </p>`;
+
+  return renderEmailShell({
+    badgeLabel: "Account created",
+    badgeColor: COLORS.living,
+    badgeSurface: COLORS.livingSurface,
+    heading: "Welcome to Renewmere",
+    bodyHtml,
+  });
+}
+
 export function renderItemCompletedEmail(opts: { itemTitle: string; moduleName: string }): string {
   const bodyHtml = `
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${COLORS.livingSurface};border-radius:8px;">
