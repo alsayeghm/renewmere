@@ -32,6 +32,16 @@ function escapeHtml(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
+export async function sendEmail(to: string, subject: string, opts: { text?: string; html?: string }) {
+  const resendKey = process.env.RESEND_API_KEY;
+  if (!resendKey) return; // Not configured yet — don't fail the caller over it.
+  await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ from: "Renewmere <notifications@renewmere.com>", to: [to], subject, ...opts }),
+  });
+}
+
 /** Shared table-based layout for admin/customer notification emails — plain
  * tables and inline styles throughout since most email clients strip <style>
  * blocks and ignore flexbox/grid. */
@@ -181,6 +191,57 @@ export function renderPlanConfirmedEmail(opts: {
     badgeColor: COLORS.living,
     badgeSurface: COLORS.livingSurface,
     heading: `${opts.items.length} item${opts.items.length === 1 ? "" : "s"} ready to fulfil`,
+    bodyHtml,
+  });
+}
+
+export function renderStepWaitingEmail(opts: {
+  itemTitle: string;
+  moduleName: string;
+  stepTitle: string;
+  customerPrompt: string;
+}): string {
+  const bodyHtml = `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;background:${COLORS.paper};border-radius:8px;">
+      <tr><td style="padding:14px 16px;">
+        <div style="font-size:13.5px;font-weight:600;color:${COLORS.ink};">${escapeHtml(opts.itemTitle)}</div>
+        <div style="font-size:12px;color:${COLORS.muted};margin-top:2px;">${escapeHtml(opts.moduleName)} &middot; ${escapeHtml(opts.stepTitle)}</div>
+      </td></tr>
+    </table>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${COLORS.accentSurface};border-radius:8px;">
+      <tr><td style="padding:16px;font-size:14px;color:${COLORS.ink};line-height:1.6;">${escapeHtml(opts.customerPrompt)}</td></tr>
+    </table>
+    <p style="margin:20px 0 0;font-size:13px;color:${COLORS.muted};line-height:1.6;">
+      Reply on your <a href="https://renewmere.com/dashboard" style="color:${COLORS.accent};">dashboard</a> — we'll pick it up from there.
+    </p>`;
+
+  return renderEmailShell({
+    badgeLabel: "We need something from you",
+    badgeColor: COLORS.accent,
+    badgeSurface: COLORS.accentSurface,
+    heading: "One quick thing to keep this moving",
+    bodyHtml,
+  });
+}
+
+export function renderItemCompletedEmail(opts: { itemTitle: string; moduleName: string }): string {
+  const bodyHtml = `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${COLORS.livingSurface};border-radius:8px;">
+      <tr><td style="padding:16px;">
+        <div style="font-size:13.5px;font-weight:600;color:${COLORS.ink};">${escapeHtml(opts.itemTitle)}</div>
+        <div style="font-size:12px;color:${COLORS.muted};margin-top:2px;">${escapeHtml(opts.moduleName)}</div>
+      </td></tr>
+    </table>
+    <p style="margin:20px 0 0;font-size:13px;color:${COLORS.ink};line-height:1.6;">
+      Every step is done — we'll keep monitoring this in the background so you stay compliant. You can review it any
+      time on your <a href="https://renewmere.com/dashboard" style="color:${COLORS.accent};">dashboard</a>.
+    </p>`;
+
+  return renderEmailShell({
+    badgeLabel: "Completed",
+    badgeColor: COLORS.living,
+    badgeSurface: COLORS.livingSurface,
+    heading: "You're compliant on this one",
     bodyHtml,
   });
 }
