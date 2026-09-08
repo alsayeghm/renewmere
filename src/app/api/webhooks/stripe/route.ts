@@ -2,9 +2,7 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { stripe } from "@/lib/stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { BILLING_LABEL, formatGBP } from "@/lib/pricing";
-import { renderPlanConfirmedEmail, type EmailOrderItem } from "@/lib/email";
-import type { BillingType } from "@/lib/modules/types";
+import { renderPlanConfirmedEmail, renderTrialEndingEmail, type EmailOrderItem } from "@/lib/email";
 
 const NOTIFY_TO = "hello@renewmere.com";
 
@@ -127,7 +125,7 @@ export async function POST(request: Request) {
       const subscription = event.data.object as Stripe.Subscription;
       const { data: order } = await admin
         .from("orders")
-        .select("items, total_annual_pence, total_recurring_pence")
+        .select("items, total_one_time_pence, total_annual_pence, total_recurring_pence")
         .eq("stripe_subscription_id", subscription.id)
         .maybeSingle();
       if (!order) break;
@@ -138,21 +136,16 @@ export async function POST(request: Request) {
       if (!email) break;
 
       const trialEnd = subscription.trial_end ? new Date(subscription.trial_end * 1000) : null;
-      const items = order.items as { title: string; moduleName: string; billing: BillingType; pricePence: number }[];
-      const chargeParts = [
-        order.total_annual_pence > 0 ? `${formatGBP(order.total_annual_pence)}/year` : null,
-        order.total_recurring_pence > 0 ? `${formatGBP(order.total_recurring_pence)}/month` : null,
-      ].filter(Boolean);
+      const items = order.items as EmailOrderItem[];
 
       await sendEmail(email, "Your Renewmere free trial ends in 3 days", {
-        text: [
-          `Your 7-day free trial ends on ${trialEnd ? trialEnd.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) : "soon"}.`,
-          ``,
-          `After that, you'll be charged ${chargeParts.join(" + ")} for:`,
-          ...items.map((i) => `  - ${i.title} (${i.moduleName}) — ${formatGBP(i.pricePence)} ${BILLING_LABEL[i.billing]}`),
-          ``,
-          `Want to cancel before then? Go to your dashboard → Manage billing: https://renewmere.com/dashboard`,
-        ].join("\n"),
+        html: renderTrialEndingEmail({
+          trialEndsAt: trialEnd ? trialEnd.toISOString() : null,
+          items,
+          totalOneTimePence: order.total_one_time_pence,
+          totalAnnualPence: order.total_annual_pence,
+          totalRecurringPence: order.total_recurring_pence,
+        }),
       });
       break;
     }

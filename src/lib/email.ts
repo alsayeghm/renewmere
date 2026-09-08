@@ -195,6 +195,43 @@ export function renderPlanConfirmedEmail(opts: {
   });
 }
 
+export function renderTrialEndingEmail(opts: {
+  trialEndsAt: string | null;
+  items: EmailOrderItem[];
+  totalOneTimePence: number;
+  totalAnnualPence: number;
+  totalRecurringPence: number;
+}): string {
+  const trialEndLabel = opts.trialEndsAt
+    ? new Date(opts.trialEndsAt).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
+    : "soon";
+
+  const bodyHtml = `
+    <p style="margin:0 0 20px;font-size:14px;color:${COLORS.ink};line-height:1.6;">
+      Your 7-day free trial ends on <strong>${trialEndLabel}</strong>. After that, we'll start charging for:
+    </p>
+    ${itemsTableHtml(opts.items)}
+    ${totalsHtml(opts.totalOneTimePence, opts.totalAnnualPence, opts.totalRecurringPence)}
+    <table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:24px;">
+      <tr><td style="border-radius:6px;background:${COLORS.accent};">
+        <a href="https://renewmere.com/dashboard" style="display:inline-block;padding:12px 22px;font-size:14px;font-weight:600;color:#ffffff;text-decoration:none;">
+          Manage billing →
+        </a>
+      </td></tr>
+    </table>
+    <p style="margin:16px 0 0;font-size:12.5px;color:${COLORS.muted};">
+      Want to cancel before then? Use the link above — no charge if you cancel during the trial.
+    </p>`;
+
+  return renderEmailShell({
+    badgeLabel: "Trial ending in 3 days",
+    badgeColor: COLORS.accent,
+    badgeSurface: COLORS.accentSurface,
+    heading: "Your free trial ends soon",
+    bodyHtml,
+  });
+}
+
 export function renderStepWaitingEmail(opts: {
   itemTitle: string;
   moduleName: string;
