@@ -86,6 +86,7 @@ function StepRowView({
   const [savingStatus, setSavingStatus] = useState(false);
   const [savingPrompt, setSavingPrompt] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const attention = needsAttention(step);
 
   async function patch(body: Record<string, unknown>) {
@@ -119,7 +120,6 @@ function StepRowView({
   }
 
   async function handleDelete() {
-    if (!confirm(`Delete step "${step.title}"? This can't be undone.`)) return;
     setDeleting(true);
     const res = await fetch(`/api/admin/order-item-steps?id=${step.id}`, { method: "DELETE" });
     if (res.ok) onDelete();
@@ -171,15 +171,34 @@ function StepRowView({
               </option>
             ))}
           </select>
-          <button
-            type="button"
-            onClick={handleDelete}
-            disabled={deleting}
-            title="Delete step"
-            className="rounded-md border border-border px-1.5 py-1 text-[11px] text-danger hover:bg-danger-surface disabled:opacity-30"
-          >
-            ✕
-          </button>
+          {confirmingDelete ? (
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={deleting}
+                className="rounded-md bg-danger px-2 py-1 text-[11px] font-semibold text-white hover:opacity-90 disabled:opacity-50"
+              >
+                {deleting ? "Deleting…" : "Confirm"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirmingDelete(false)}
+                className="rounded-md border border-border px-1.5 py-1 text-[11px] text-muted hover:bg-surface-2"
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setConfirmingDelete(true)}
+              title="Delete step"
+              className="rounded-md border border-border px-1.5 py-1 text-[11px] text-danger hover:bg-danger-surface"
+            >
+              ✕
+            </button>
+          )}
         </div>
       </div>
       {attention && (
