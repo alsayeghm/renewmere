@@ -19,7 +19,7 @@ export default async function DashboardPage() {
     supabase
       .from("orders")
       .select(
-        "id, items, status, total_one_time_pence, total_annual_pence, total_recurring_pence, trial_end_at, current_period_end, cancel_at_period_end, created_at, order_items(id, title, module_name, billing, price_pence, fulfillment_status, order_item_steps(id, title, description, status, customer_prompt, customer_response_text, customer_response_submitted_at))",
+        "id, items, status, total_one_time_pence, total_annual_pence, total_recurring_pence, trial_end_at, current_period_end, cancel_at_period_end, created_at, order_items(id, title, module_name, billing, price_pence, fulfillment_status, customer_note, canceled_at, stripe_subscription_item_id, order_item_steps(id, title, description, status, customer_prompt, customer_response_text, customer_response_submitted_at))",
       )
       .eq("user_id", userData.user.id)
       .order("created_at", { ascending: true }),

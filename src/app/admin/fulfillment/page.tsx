@@ -76,6 +76,7 @@ export default async function AdminFulfillmentPage() {
       customer_prompt: s.customer_prompt,
       customer_response_text: s.customer_response_text,
       customer_response_submitted_at: s.customer_response_submitted_at,
+      updated_at: s.updated_at,
       files: fileUrlsByStep[s.id] ?? [],
     });
   }

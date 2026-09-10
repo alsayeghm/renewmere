@@ -35,6 +35,9 @@ export type OrderItemRow = {
   billing: BillingType;
   price_pence: number;
   fulfillment_status: string;
+  customer_note: string | null;
+  canceled_at: string | null;
+  stripe_subscription_item_id: string | null;
   order_item_steps: StepRow[];
 };
 
@@ -281,17 +284,70 @@ function StepChecklist({ steps, onUpdate }: { steps: StepRow[]; onUpdate: (id: s
               {step.description && <p className="text-[12px] text-muted">{step.description}</p>}
             </div>
           </div>
-          {step.status === "waiting_on_customer" && !step.customer_response_submitted_at && (
-            <StepResponseForm step={step} onSubmitted={(patch) => onUpdate(step.id, patch)} />
-          )}
           {step.customer_response_submitted_at && (
             <p className="ml-6 mt-1 text-[11.5px] text-muted">
               You replied {formatDate(step.customer_response_submitted_at)}
             </p>
           )}
+          {step.status === "waiting_on_customer" && (
+            <StepResponseForm step={step} onSubmitted={(patch) => onUpdate(step.id, patch)} />
+          )}
         </div>
       ))}
     </div>
+  );
+}
+
+function CancelItemButton({ itemId, onCanceled }: { itemId: string; onCanceled: () => void }) {
+  const [loading, setLoading] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleCancel() {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/cancel-order-item", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ order_item_id: itemId }),
+      });
+      if (!res.ok) throw new Error("failed");
+      onCanceled();
+    } catch {
+      setError("Couldn't cancel — please try again or contact us.");
+      setLoading(false);
+    }
+  }
+
+  if (confirming) {
+    return (
+      <div className="flex items-center gap-2">
+        <span className="text-[12px] text-danger">Cancel this obligation?</span>
+        <button
+          type="button"
+          onClick={handleCancel}
+          disabled={loading}
+          className="rounded-md bg-danger px-2.5 py-1 text-[11.5px] font-semibold text-white hover:opacity-90 disabled:opacity-50"
+        >
+          {loading ? "Cancelling…" : "Yes, cancel"}
+        </button>
+        <button type="button" onClick={() => setConfirming(false)} className="text-[11.5px] text-muted hover:opacity-80">
+          Never mind
+        </button>
+        {error && <span className="text-[11.5px] text-danger">{error}</span>}
+      </div>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => setConfirming(true)}
+      className="text-[11.5px] font-medium text-muted hover:text-danger"
+    >
+      Cancel this item
+    </button>
   );
 }
 
@@ -314,6 +370,10 @@ function OrderCard({ order }: { order: OrderRow }) {
     );
   }
 
+  function markCanceled(itemId: string) {
+    setItems((prev) => prev.map((i) => (i.id === itemId ? { ...i, canceled_at: new Date().toISOString() } : i)));
+  }
+
   return (
     <div className="rounded-lg border border-border bg-surface p-6">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -327,10 +387,27 @@ function OrderCard({ order }: { order: OrderRow }) {
 
       <div className="grid gap-3">
         {items.map((item) => {
+          if (item.canceled_at) {
+            return (
+              <div key={item.id} className="rounded-md border border-dashed border-border px-4 py-3 opacity-60">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <p className="text-[13.5px] font-medium text-ink line-through">{item.title}</p>
+                    <p className="text-[12px] text-muted">{item.module_name}</p>
+                  </div>
+                  <span className="inline-flex items-center rounded-full bg-surface-2 px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wide text-muted">
+                    Canceled
+                  </span>
+                </div>
+              </div>
+            );
+          }
           const meta = FULFILLMENT_META[item.fulfillment_status] ?? {
             label: item.fulfillment_status,
             className: "bg-surface-2 text-muted",
           };
+          const cancelable =
+            item.billing !== "one_time" && !!item.stripe_subscription_item_id && (order.status === "trialing" || order.status === "active");
           return (
             <div key={item.id} className="rounded-md border border-border px-4 py-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
@@ -349,10 +426,20 @@ function OrderCard({ order }: { order: OrderRow }) {
                   </span>
                 </div>
               </div>
+              {item.customer_note && (
+                <p className="mt-2 rounded-md bg-[color-mix(in_srgb,var(--accent)_10%,var(--surface))] px-3 py-2 text-[12.5px] text-ink">
+                  {item.customer_note}
+                </p>
+              )}
               <StepChecklist
                 steps={item.order_item_steps}
                 onUpdate={(stepId, patch) => updateStep(item.id, stepId, patch)}
               />
+              {cancelable && (
+                <div className="mt-2">
+                  <CancelItemButton itemId={item.id} onCanceled={() => markCanceled(item.id)} />
+                </div>
+              )}
             </div>
           );
         })}

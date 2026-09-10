@@ -61,9 +61,10 @@ export async function POST(request: Request) {
       if (!orderId) break;
 
       const subscriptionId = typeof session.subscription === "string" ? session.subscription : null;
-      const billingFields = subscriptionId
-        ? subscriptionBillingFields(await stripe.subscriptions.retrieve(subscriptionId))
-        : {};
+      const subscription = subscriptionId
+        ? await stripe.subscriptions.retrieve(subscriptionId, { expand: ["items.data.price.product"] })
+        : null;
+      const billingFields = subscription ? subscriptionBillingFields(subscription) : {};
 
       await admin
         .from("orders")
@@ -76,6 +77,29 @@ export async function POST(request: Request) {
           ...billingFields,
         })
         .eq("id", orderId);
+
+      // Map each subscription item back to its order_item (matched by the
+      // product name Checkout was given) so a customer can later cancel just
+      // that one obligation instead of the whole subscription.
+      if (subscription) {
+        const { data: unassigned } = await admin
+          .from("order_items")
+          .select("id, title, module_name")
+          .eq("order_id", orderId)
+          .is("stripe_subscription_item_id", null);
+        for (const subItem of subscription.items.data) {
+          const product = subItem.price.product;
+          const productName = typeof product === "string" ? null : (product as Stripe.Product).name;
+          if (!productName) continue;
+          const match = (unassigned ?? []).find((oi) => `${oi.title} — ${oi.module_name}` === productName);
+          if (!match) continue;
+          await admin
+            .from("order_items")
+            .update({ stripe_subscription_item_id: subItem.id })
+            .eq("id", match.id);
+          unassigned!.splice(unassigned!.indexOf(match), 1);
+        }
+      }
 
       const { data: order } = await admin
         .from("orders")

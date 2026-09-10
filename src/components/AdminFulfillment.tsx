@@ -12,6 +12,7 @@ export type StepRow = {
   customer_prompt: string | null;
   customer_response_text: string | null;
   customer_response_submitted_at: string | null;
+  updated_at: string | null;
   files: { name: string; url: string }[];
 };
 
@@ -29,6 +30,12 @@ export type FulfillmentRow = {
   order_status: string;
   customer_email: string;
 };
+
+function needsAttention(step: StepRow): boolean {
+  if (!step.customer_response_submitted_at) return false;
+  if (!step.updated_at) return true;
+  return new Date(step.customer_response_submitted_at) > new Date(step.updated_at);
+}
 
 const STATUS_OPTIONS = [
   { value: "not_started", label: "Not started" },
@@ -58,10 +65,28 @@ function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 }
 
-function StepRowView({ step, onUpdate }: { step: StepRow; onUpdate: (patch: Partial<StepRow>) => void }) {
+function StepRowView({
+  step,
+  onUpdate,
+  onDelete,
+  onMoveUp,
+  onMoveDown,
+  canMoveUp,
+  canMoveDown,
+}: {
+  step: StepRow;
+  onUpdate: (patch: Partial<StepRow>) => void;
+  onDelete: () => void;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+  canMoveUp: boolean;
+  canMoveDown: boolean;
+}) {
   const [prompt, setPrompt] = useState(step.customer_prompt ?? "");
   const [savingStatus, setSavingStatus] = useState(false);
   const [savingPrompt, setSavingPrompt] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const attention = needsAttention(step);
 
   async function patch(body: Record<string, unknown>) {
     const res = await fetch("/api/admin/order-item-steps", {
@@ -75,7 +100,14 @@ function StepRowView({ step, onUpdate }: { step: StepRow; onUpdate: (patch: Part
   async function handleStatusChange(status: string) {
     setSavingStatus(true);
     const ok = await patch({ status });
-    if (ok) onUpdate({ status });
+    if (ok) onUpdate({ status, updated_at: new Date().toISOString() });
+    setSavingStatus(false);
+  }
+
+  async function handleMarkSeen() {
+    setSavingStatus(true);
+    const ok = await patch({ status: step.status });
+    if (ok) onUpdate({ updated_at: new Date().toISOString() });
     setSavingStatus(false);
   }
 
@@ -86,26 +118,80 @@ function StepRowView({ step, onUpdate }: { step: StepRow; onUpdate: (patch: Part
     setSavingPrompt(false);
   }
 
+  async function handleDelete() {
+    if (!confirm(`Delete step "${step.title}"? This can't be undone.`)) return;
+    setDeleting(true);
+    const res = await fetch(`/api/admin/order-item-steps?id=${step.id}`, { method: "DELETE" });
+    if (res.ok) onDelete();
+    else setDeleting(false);
+  }
+
   return (
-    <div className="rounded-md border border-border p-3">
+    <div className={`rounded-md border p-3 ${attention ? "border-amber bg-amber-surface" : "border-border"}`}>
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
-          <p className="text-[13.5px] font-medium text-ink">{step.title}</p>
+          <div className="flex items-center gap-2">
+            <p className="text-[13.5px] font-medium text-ink">{step.title}</p>
+            {attention && (
+              <span className="rounded-full bg-amber px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wide text-white">
+                New reply
+              </span>
+            )}
+          </div>
           {step.description && <p className="text-[12px] text-muted">{step.description}</p>}
         </div>
-        <select
-          value={step.status}
-          onChange={(e) => handleStatusChange(e.target.value)}
-          disabled={savingStatus}
-          className={`rounded-md border border-border px-2 py-1 text-[12px] font-medium ${STATUS_STYLE[step.status] ?? ""}`}
-        >
-          {STEP_STATUS_OPTIONS.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={onMoveUp}
+            disabled={!canMoveUp}
+            title="Move up"
+            className="rounded-md border border-border px-1.5 py-1 text-[11px] text-muted hover:bg-surface-2 disabled:opacity-30"
+          >
+            ↑
+          </button>
+          <button
+            type="button"
+            onClick={onMoveDown}
+            disabled={!canMoveDown}
+            title="Move down"
+            className="rounded-md border border-border px-1.5 py-1 text-[11px] text-muted hover:bg-surface-2 disabled:opacity-30"
+          >
+            ↓
+          </button>
+          <select
+            value={step.status}
+            onChange={(e) => handleStatusChange(e.target.value)}
+            disabled={savingStatus}
+            className={`rounded-md border border-border px-2 py-1 text-[12px] font-medium ${STATUS_STYLE[step.status] ?? ""}`}
+          >
+            {STEP_STATUS_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={deleting}
+            title="Delete step"
+            className="rounded-md border border-border px-1.5 py-1 text-[11px] text-danger hover:bg-danger-surface disabled:opacity-30"
+          >
+            ✕
+          </button>
+        </div>
       </div>
+      {attention && (
+        <button
+          type="button"
+          onClick={handleMarkSeen}
+          disabled={savingStatus}
+          className="mt-2 text-[11.5px] font-medium text-accent hover:opacity-80"
+        >
+          Mark as seen
+        </button>
+      )}
 
       {step.status === "waiting_on_customer" && (
         <div className="mt-2 grid gap-1">
@@ -231,8 +317,10 @@ function AddStepForm({ orderItemId, onAdded }: { orderItemId: string; onAdded: (
 function Row({ item, onUpdate }: { item: FulfillmentRow; onUpdate: (id: string, patch: Partial<FulfillmentRow>) => void }) {
   const [expanded, setExpanded] = useState(false);
   const [adminNotes, setAdminNotes] = useState(item.admin_notes ?? "");
+  const [customerNote, setCustomerNote] = useState(item.customer_note ?? "");
   const [savingStatus, setSavingStatus] = useState(false);
   const [savingNotes, setSavingNotes] = useState(false);
+  const [savingCustomerNote, setSavingCustomerNote] = useState(false);
 
   async function handleStatusChange(status: string) {
     setSavingStatus(true);
@@ -256,6 +344,17 @@ function Row({ item, onUpdate }: { item: FulfillmentRow; onUpdate: (id: string, 
     setSavingNotes(false);
   }
 
+  async function handleSaveCustomerNote() {
+    setSavingCustomerNote(true);
+    const res = await fetch("/api/admin/order-items", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: item.id, customer_note: customerNote || null }),
+    });
+    if (res.ok) onUpdate(item.id, { customer_note: customerNote || null });
+    setSavingCustomerNote(false);
+  }
+
   function updateStep(stepId: string, patch: Partial<StepRow>) {
     onUpdate(item.id, { steps: item.steps.map((s) => (s.id === stepId ? { ...s, ...patch } : s)) });
   }
@@ -264,14 +363,46 @@ function Row({ item, onUpdate }: { item: FulfillmentRow; onUpdate: (id: string, 
     onUpdate(item.id, { steps: [...item.steps, step] });
   }
 
+  function deleteStep(stepId: string) {
+    onUpdate(item.id, { steps: item.steps.filter((s) => s.id !== stepId) });
+  }
+
+  async function moveStep(index: number, direction: -1 | 1) {
+    const target = index + direction;
+    if (target < 0 || target >= item.steps.length) return;
+    const reordered = [...item.steps];
+    [reordered[index], reordered[target]] = [reordered[target], reordered[index]];
+    onUpdate(item.id, { steps: reordered });
+    await Promise.all([
+      fetch("/api/admin/order-item-steps", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: reordered[index].id, position: index }),
+      }),
+      fetch("/api/admin/order-item-steps", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: reordered[target].id, position: target }),
+      }),
+    ]);
+  }
+
   const doneCount = item.steps.filter((s) => s.status === "done").length;
   const waitingCount = item.steps.filter((s) => s.status === "waiting_on_customer").length;
+  const attentionCount = item.steps.filter(needsAttention).length;
 
   return (
-    <div className="rounded-lg border border-border bg-surface p-5">
+    <div className={`rounded-lg border bg-surface p-5 ${attentionCount > 0 ? "border-amber" : "border-border"}`}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-[14px] font-medium text-ink">{item.title}</p>
+          <div className="flex items-center gap-2">
+            <p className="text-[14px] font-medium text-ink">{item.title}</p>
+            {attentionCount > 0 && (
+              <span className="rounded-full bg-amber px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wide text-white">
+                {attentionCount} new repl{attentionCount === 1 ? "y" : "ies"}
+              </span>
+            )}
+          </div>
           <p className="text-[12px] text-muted">
             {item.module_name} · {item.customer_email} · ordered {formatDate(item.created_at)}
           </p>
@@ -316,11 +447,39 @@ function Row({ item, onUpdate }: { item: FulfillmentRow; onUpdate: (id: string, 
       {expanded && (
         <div className="mt-4 grid gap-3 border-t border-border pt-4">
           <div className="grid gap-2">
-            {item.steps.map((step) => (
-              <StepRowView key={step.id} step={step} onUpdate={(patch) => updateStep(step.id, patch)} />
+            {item.steps.map((step, index) => (
+              <StepRowView
+                key={step.id}
+                step={step}
+                onUpdate={(patch) => updateStep(step.id, patch)}
+                onDelete={() => deleteStep(step.id)}
+                onMoveUp={() => moveStep(index, -1)}
+                onMoveDown={() => moveStep(index, 1)}
+                canMoveUp={index > 0}
+                canMoveDown={index < item.steps.length - 1}
+              />
             ))}
           </div>
           <AddStepForm orderItemId={item.id} onAdded={addStep} />
+
+          <label className="grid gap-1">
+            <span className="text-[12px] font-medium text-muted">Note to customer (shown on their dashboard)</span>
+            <textarea
+              value={customerNote}
+              onChange={(e) => setCustomerNote(e.target.value)}
+              rows={2}
+              placeholder="e.g. Your EA registration is submitted — we'll update this once approved."
+              className="rounded-md border border-border bg-paper px-3 py-2 text-[13px] text-ink"
+            />
+          </label>
+          <button
+            type="button"
+            onClick={handleSaveCustomerNote}
+            disabled={savingCustomerNote}
+            className="justify-self-start rounded-md bg-accent px-4 py-2 text-[13px] font-semibold text-white hover:opacity-90 disabled:opacity-50"
+          >
+            {savingCustomerNote ? "Saving…" : "Save note to customer"}
+          </button>
 
           <label className="grid gap-1">
             <span className="text-[12px] font-medium text-muted">Internal notes (not visible to customer)</span>
@@ -349,6 +508,7 @@ export function AdminFulfillment({ items: initialItems }: { items: FulfillmentRo
   const [items, setItems] = useState(initialItems);
   const [hideCompleted, setHideCompleted] = useState(true);
   const [onlyPaid, setOnlyPaid] = useState(true);
+  const [onlyNeedsAttention, setOnlyNeedsAttention] = useState(false);
 
   function updateItem(id: string, patch: Partial<FulfillmentRow>) {
     setItems((prev) => prev.map((i) => (i.id === id ? { ...i, ...patch } : i)));
@@ -359,9 +519,10 @@ export function AdminFulfillment({ items: initialItems }: { items: FulfillmentRo
       items.filter((i) => {
         if (hideCompleted && i.fulfillment_status === "completed") return false;
         if (onlyPaid && !PAID_ORDER_STATUSES.includes(i.order_status)) return false;
+        if (onlyNeedsAttention && !i.steps.some(needsAttention)) return false;
         return true;
       }),
-    [items, hideCompleted, onlyPaid],
+    [items, hideCompleted, onlyPaid, onlyNeedsAttention],
   );
 
   const counts = useMemo(() => {
@@ -370,11 +531,23 @@ export function AdminFulfillment({ items: initialItems }: { items: FulfillmentRo
     return c;
   }, [items]);
 
+  const attentionTotal = useMemo(
+    () => items.reduce((sum, i) => sum + i.steps.filter(needsAttention).length, 0),
+    [items],
+  );
+
   return (
     <div className="grid gap-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <p className="mb-1 font-mono text-[11px] uppercase tracking-wide text-accent">Admin</p>
+          <div className="mb-1 flex items-center gap-2">
+            <p className="font-mono text-[11px] uppercase tracking-wide text-accent">Admin</p>
+            {attentionTotal > 0 && (
+              <span className="rounded-full bg-amber px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wide text-white">
+                {attentionTotal} new repl{attentionTotal === 1 ? "y" : "ies"} to review
+              </span>
+            )}
+          </div>
           <h1 className="text-2xl font-bold text-ink">Fulfillment</h1>
           <p className="text-[13px] text-muted">
             {counts.not_started} not started · {counts.in_progress} in progress · {counts.waiting_on_customer} waiting
@@ -389,6 +562,14 @@ export function AdminFulfillment({ items: initialItems }: { items: FulfillmentRo
           <label className="flex items-center gap-2">
             <input type="checkbox" checked={hideCompleted} onChange={(e) => setHideCompleted(e.target.checked)} />
             Hide completed
+          </label>
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={onlyNeedsAttention}
+              onChange={(e) => setOnlyNeedsAttention(e.target.checked)}
+            />
+            Only needs attention
           </label>
         </div>
       </div>

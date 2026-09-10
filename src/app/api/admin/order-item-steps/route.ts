@@ -53,12 +53,13 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: "unauthorized" }, { status: 403 });
   }
   const body = await request.json();
-  const { id, status, customer_prompt, title, description } = body as {
+  const { id, status, customer_prompt, title, description, position } = body as {
     id: string;
     status?: string;
     customer_prompt?: string | null;
     title?: string;
     description?: string | null;
+    position?: number;
   };
   if (!id) {
     return NextResponse.json({ error: "missing_id" }, { status: 400 });
@@ -72,6 +73,7 @@ export async function PATCH(request: Request) {
   if (customer_prompt !== undefined) update.customer_prompt = customer_prompt;
   if (title !== undefined) update.title = title;
   if (description !== undefined) update.description = description;
+  if (position !== undefined) update.position = position;
 
   const admin = createAdminClient();
   const { data: step, error } = await admin
@@ -96,8 +98,14 @@ export async function PATCH(request: Request) {
     customerEmail = userData.user?.email ?? null;
   }
 
-  // A step just started waiting on the customer — tell them what's needed.
-  if (status === "waiting_on_customer" && step.customer_prompt && customerEmail && item) {
+  // Tell the customer when a prompt becomes live for them — either the step
+  // just moved to waiting_on_customer, or the prompt was edited/re-set while
+  // it was already waiting (e.g. a follow-up question after their reply).
+  const promptJustWentLive =
+    step.status === "waiting_on_customer" &&
+    !!step.customer_prompt &&
+    (status === "waiting_on_customer" || customer_prompt !== undefined);
+  if (promptJustWentLive && customerEmail && item) {
     await sendEmail(
       customerEmail,
       "We need something from you — Renewmere",
@@ -138,5 +146,21 @@ export async function PATCH(request: Request) {
     }
   }
 
+  return NextResponse.json({ ok: true });
+}
+
+export async function DELETE(request: Request) {
+  if (!(await requireAdmin())) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 403 });
+  }
+  const id = new URL(request.url).searchParams.get("id");
+  if (!id) {
+    return NextResponse.json({ error: "missing_id" }, { status: 400 });
+  }
+  const admin = createAdminClient();
+  const { error } = await admin.from("order_item_steps").delete().eq("id", id);
+  if (error) {
+    return NextResponse.json({ error: "delete_failed" }, { status: 500 });
+  }
   return NextResponse.json({ ok: true });
 }

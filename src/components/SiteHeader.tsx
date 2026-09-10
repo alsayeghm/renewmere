@@ -73,6 +73,12 @@ export function SiteHeader() {
               >
                 Dashboard
               </Link>
+              <Link
+                href="/account"
+                className="text-[13.5px] font-medium text-ink transition-colors hover:text-accent"
+              >
+                Account
+              </Link>
               <button
                 type="button"
                 onClick={handleLogout}
